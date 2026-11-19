@@ -86,7 +86,7 @@
         <!-- PANTALLA DE REGISTRO -->
         <div id="screen-register" class="p-6 md:p-10 relative z-10">
             <div class="max-w-lg mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-md border border-amber-200">
-                <h2 class="text-2xl font-black text-center mb-1 text-amber-900">¡Bienvenidas, estudiantes!</h2>
+                <h2 class="text-2xl font-black text-center mb-1 text-amber-900">¡Bienvenidas, queridas estudiantes!</h2>
                 <p class="text-center text-sm text-amber-700 mb-6">Selecciona tu grado y sección para comenzar tu evaluación.</p>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -224,7 +224,7 @@
 
     <script>
         // ENLACE APPS SCRIPT ACTUALIZADO
-        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxug8VlE-ecjmm6HdAdTSZLuOIJTKFuxqRpJvgCFG-snQZGnZQb6sb_bpHrV23S16gO/exec";
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxmXfltL95vtXWmiRjEXEFSzO2lnqxGp7OI9zKBJcKYCI5ew97zRDptrS-48_oalmUR/exec";
 
         let userIP = "No detectada";
         fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => { userIP = data.ip; }).catch(()=>{});
@@ -302,9 +302,9 @@
             document.getElementById('sel-nombre').innerHTML = '';
         }
 
-        // BANCO DE PREGUNTAS ACTUALIZADO (TOTAL DE PUNTOS: 20, Cada pregunta individual vale 0.5 puntos)
+        // BANCO DE PREGUNTAS ACTUALIZADO (EXACTAMENTE 40 PREGUNTAS x 0.5 = 20 PUNTOS)
         const originalQuestions = [
-            // I. PREGUNTAS PARA MARCAR (OPCIÓN MÚLTIPLE) - 10 preguntas x 0.5 = 5 puntos
+            // I. PREGUNTAS PARA MARCAR (1-10)
             { id: 1, type: 'mc', points: 0.5, q: '¿Qué significa el prefijo en la palabra "Preinca"?', options: ["Después de los incas", "Antes de los incas", "Durante los incas", "Enemigos de los incas"], answer: 1 },
             { id: 2, type: 'mc', points: 0.5, q: '¿Quién fue el arqueólogo peruano que descubrió la cultura Chavín en 1919?', options: ["Max Uhle", "María Reiche", "Julio C. Tello", "Pedro Cieza de León"], answer: 2 },
             { id: 3, type: 'mc', points: 0.5, q: 'La cultura Paracas destacó en la medicina antigua porque realizaron cirugías complejas para curar a los guerreros heridos. ¿Cómo se llamaron estas operaciones?', options: ["Fardos funerarios", "Trepanaciones craneanas", "Huacos retratos", "Camellones"], answer: 1 },
@@ -316,7 +316,7 @@
             { id: 9, type: 'mc', points: 0.5, q: 'La cultura Nazca logró sobrevivir en el desierto gracias a grandes obras de ingeniería. ¿Qué construyeron para llevar agua a sus cultivos?', options: ["Camellones y cochas", "Represas y canales subterráneos", "Huacas de adobe", "Fardos funerarios"], answer: 1 },
             { id: 10, type: 'mc', points: 0.5, q: 'La Estela de Raimondi, el Obelisco Tello y el Lanzón Monolítico son esculturas líticas (de piedra) que pertenecen a la cultura:', options: ["Chavín", "Chimú", "Paracas", "Mochica"], answer: 0 },
 
-            // II. PREGUNTAS PARA COMPLETAR (ESPACIOS EN BLANCO) - 10 preguntas x 0.5 = 5 puntos
+            // II. PREGUNTAS PARA COMPLETAR (11-20)
             { id: 11, type: 'fill', points: 0.5, q: 'La cultura ________ se desarrolló en el departamento de Ancash (Provincia de Huari).', accepted: ["Chavín", "chavin", "CHAVÍN", "CHAVIN"] },
             { id: 12, type: 'fill', points: 0.5, q: 'Los tejidos de la cultura Paracas se realizaban utilizando lana de ________, algodón y plumas.', accepted: ["vicuña", "vicuna", "VICUÑA", "VICUNA"] },
             { id: 13, type: 'fill', points: 0.5, q: 'El calendario astronómico más grande del mundo se ubica en Ica y es mundialmente conocido como los ________ o Líneas de Nazca.', accepted: ["Geoglifos", "geoglifos", "GEOGLIFOS"] },
@@ -328,22 +328,31 @@
             { id: 19, type: 'fill', points: 0.5, q: 'Según la historia, los antiguos peruanos lograron sustentar su alimentación gracias al constante desarrollo de la agricultura y la ________.', accepted: ["ganadería", "ganaderia", "Ganadería", "GANADERÍA", "GANADERIA", "la ganaderia", "la ganadería"] },
             { id: 20, type: 'fill', points: 0.5, q: 'Max Uhle es el descubridor de varias culturas costeñas, entre ellas la cultura ________ en 1901 y la cultura Chimú en 1902.', accepted: ["Nazca", "nazca", "NAZCA", "Nasca", "nasca", "NASCA"] },
 
-            // III. COMPLETAR (CON IMÁGENES) - 6 preguntas x 0.5 = 3 puntos
-            { id: 21, type: 'image_mc', points: 0.5, q: 'Observa la siguiente escultura en piedra que se colocaba en los templos para causar temor. ¿A qué cultura pertenece esta "Cabeza Clava"?', imageUrl: "https://www.gettyimages.com/detail/photo/cabeza-clava-or-pre-incan-sculpture-in-peru-royalty-free-image/1214097431", options: ["Cultura Chavín", "Cultura Paracas", "Cultura Nazca", "Cultura Mochica"], answer: 0 },
-            { id: 22, type: 'image_mc', points: 0.5, q: 'Este antiguo y colorido textil es evidencia de que fueron los mejores tejedores. ¿A qué cultura pertenece este manto?', imageUrl: "https://www.gettyimages.com/detail/news-photo/pre-inca-civilization-peru-circa-6th-century-b-c-paracas-news-photo/122219696", options: ["Cultura Chavín", "Cultura Nazca", "Cultura Paracas", "Cultura Chimú"], answer: 2 },
-            { id: 23, type: 'image_mc', points: 0.5, q: 'La imagen vista desde el aire muestra la figura de un colibrí gigante trazado en el desierto. ¿Qué cultura elaboró este geoglifo?', imageUrl: "https://www.gettyimages.com/detail/photo/colibri-nazca-lines-peru-royalty-free-image/460245349", options: ["Cultura Tiahuanaco", "Cultura Mochica", "Cultura Paracas", "Cultura Nazca (o Nasca)"], answer: 3 },
-            { id: 24, type: 'image_mc', points: 0.5, q: 'Esta cerámica escultórica expresa estados de ánimo en el rostro humano (Huaco Retrato). ¿A qué cultura de la costa norte pertenece?', imageUrl: "https://www.gettyimages.com/detail/photo/mochica-ceramic-stirrup-spout-vessel-with-shaman-royalty-free-image/541363616", options: ["Cultura Chimú", "Cultura Mochica (o Moche)", "Cultura Chavín", "Cultura Tiahuanaco"], answer: 1 },
-            { id: 25, type: 'image_mc', points: 0.5, q: 'El monumento lítico que observas es la "Portada del Sol", donde tallaron al Dios de los Báculos. ¿Qué cultura construyó este monumento?', imageUrl: "https://media.gettyimages.com/id/527970534/es/foto/monolith-in-gateway-of-pre-incan-ruins-tiahuanaco.jpg?s=170667a&w=gi&k=20&c=L5v8mNvJBcpmQNl1ZsAlb3K99Qo2hON3vvzM9vXXKsk=", options: ["Cultura Paracas", "Cultura Nazca", "Cultura Tiahuanaco", "Cultura Chavín"], answer: 2 },
-            { id: 26, type: 'image_mc', points: 0.5, q: 'Esta pieza ceremonial de oro fino representa al dios Naylamp y demuestra un gran trabajo de orfebrería. ¿A qué cultura pertenece el Tumi?', imageUrl: "https://www.gettyimages.com/detail/news-photo/chimu-culture-tumi-sacrificial-ceremonial-axe-made-of-gold-news-photo/513679001", options: ["Cultura Chimú", "Cultura Mochica", "Cultura Tiahuanaco", "Cultura Nazca"], answer: 0 },
+            // III. COMPLETAR CON IMÁGENES (21-26)
+            { id: 21, type: 'image_mc', points: 0.5, q: 'Observa la siguiente escultura en piedra que se colocaba en los templos para causar temor. ¿A qué cultura pertenece esta "Cabeza Clava"?', imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Chav%C3%ADn_de_Hu%C3%A1ntar_-_Cabeza_clava.jpg/800px-Chav%C3%ADn_de_Hu%C3%A1ntar_-_Cabeza_clava.jpg", options: ["Cultura Chavín", "Cultura Paracas", "Cultura Nazca", "Cultura Mochica"], answer: 0 },
+            { id: 22, type: 'image_mc', points: 0.5, q: 'Este antiguo y colorido textil es evidencia de que fueron los mejores tejedores. ¿A qué cultura pertenece este manto?', imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Textil_Paracas.jpg/800px-Textil_Paracas.jpg", options: ["Cultura Chavín", "Cultura Nazca", "Cultura Paracas", "Cultura Chimú"], answer: 2 },
+            { id: 23, type: 'image_mc', points: 0.5, q: 'La imagen vista desde el aire muestra la figura de un colibrí gigante trazado en el desierto. ¿Qué cultura elaboró este geoglifo?', imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/L%C3%ADneas_de_Nazca%2C_Nazca%2C_Per%C3%BA%2C_2015-07-29%2C_DD_52.JPG/800px-L%C3%ADneas_de_Nazca%2C_Nazca%2C_Per%C3%BA%2C_2015-07-29%2C_DD_52.JPG", options: ["Cultura Tiahuanaco", "Cultura Mochica", "Cultura Paracas", "Cultura Nazca (o Nasca)"], answer: 3 },
+            { id: 24, type: 'image_mc', points: 0.5, q: 'Esta cerámica escultórica expresa estados de ánimo en el rostro humano (Huaco Retrato). ¿A qué cultura de la costa norte pertenece?', imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Moche_portrait_vessel_-_Museo_Larco.jpg/600px-Moche_portrait_vessel_-_Museo_Larco.jpg", options: ["Cultura Chimú", "Cultura Mochica (o Moche)", "Cultura Chavín", "Cultura Tiahuanaco"], answer: 1 },
+            { id: 25, type: 'image_mc', points: 0.5, q: 'El monumento lítico que observas es la "Portada del Sol", donde tallaron al Dios de los Báculos. ¿Qué cultura construyó este monumento?', imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Sun_Gate_%2834571992160%29.jpg/800px-Sun_Gate_%2834571992160%29.jpg", options: ["Cultura Paracas", "Cultura Nazca", "Cultura Tiahuanaco", "Cultura Chavín"], answer: 2 },
+            { id: 26, type: 'image_mc', points: 0.5, q: 'Esta pieza ceremonial de oro fino representa al dios Naylamp y demuestra un gran trabajo de orfebrería. ¿A qué cultura pertenece el Tumi?', imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Tumi_lambayeque.jpg/400px-Tumi_lambayeque.jpg", options: ["Cultura Chimú", "Cultura Mochica", "Cultura Tiahuanaco", "Cultura Nazca"], answer: 0 },
 
-            // IV. RELACIONAR (PAREAMIENTO) - 2 bloques (Preguntas 27 a 34 equivale a 8 preguntas x 0.5 = 4 puntos totales)
-            { id: 27, type: 'match', points: 2, q: 'Relaciona la Cultura Preinca con el Departamento actual donde se desarrolló:', pairs: [ { left: "Cultura Paracas", right: "Ica (Península)" }, { left: "Cultura Tiahuanaco", right: "Puno (Meseta del Collao)" }, { left: "Cultura Chavín", right: "Ancash" }, { left: "Cultura Chimú", right: "La Libertad" } ] },
-            { id: 28, type: 'match', points: 2, q: 'Relaciona la Cultura con su Investigador o Descubridor:', pairs: [ { left: "Cultura Nazca", right: "Max Uhle (1901) / María Reiche" }, { left: "Cultura Chavín", right: "Julio C. Tello (1919)" }, { left: "Cultura Tiahuanaco", right: "Pedro Cieza de León (Cronista)" }, { left: "Cultura Mochica", right: "Max Uhle (1909)" } ] },
+            // IV. RELACIONAR ADAPTADO A OPCIÓN MÚLTIPLE INDIVIDUAL (27-34)
+            { id: 27, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿En qué departamento actual se desarrolló la Cultura Paracas?', options: ["Ica (Península)", "Puno (Meseta del Collao)", "Ancash", "La Libertad"], answer: 0 },
+            { id: 28, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿En qué departamento actual se desarrolló la Cultura Tiahuanaco?', options: ["Ancash", "Ica (Península)", "Puno (Meseta del Collao)", "La Libertad"], answer: 2 },
+            { id: 29, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿En qué departamento actual se desarrolló la Cultura Chavín?', options: ["La Libertad", "Ancash", "Puno (Meseta del Collao)", "Ica (Península)"], answer: 1 },
+            { id: 30, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿En qué departamento actual se desarrolló la Cultura Chimú?', options: ["Puno (Meseta del Collao)", "Ancash", "La Libertad", "Ica (Península)"], answer: 2 },
+            { id: 31, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿Quién fue el investigador de la Cultura Nazca?', options: ["Max Uhle (1901) / María Reiche", "Julio C. Tello (1919)", "Pedro Cieza de León", "Max Uhle (1909)"], answer: 0 },
+            { id: 32, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿Quién fue el descubridor de la Cultura Chavín?', options: ["Pedro Cieza de León", "Max Uhle (1901) / María Reiche", "Julio C. Tello (1919)", "Max Uhle (1909)"], answer: 2 },
+            { id: 33, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿Qué cronista es asociado con la Cultura Tiahuanaco?', options: ["Max Uhle (1909)", "Julio C. Tello (1919)", "Pedro Cieza de León", "Max Uhle (1901) / María Reiche"], answer: 2 },
+            { id: 34, type: 'mc', points: 0.5, q: 'Relaciona correctamente: ¿Quién fue el descubridor de la Cultura Mochica?', options: ["Julio C. Tello (1919)", "Max Uhle (1909)", "Pedro Cieza de León", "Max Uhle (1901) / María Reiche"], answer: 1 },
 
-            // V. ORDENAR (SECUENCIAS Y JERARQUÍAS) - Equivalente a Preguntas 35 a 40 (3 puntos en total)
-            { id: 29, type: 'order', points: 1.5, q: 'Ordena cronológicamente (del más antiguo al más reciente) los descubrimientos realizados por el arqueólogo Max Uhle:', correctOrder: ["Descubrimiento de la Cultura Nazca (1901)", "Descubrimiento de la Cultura Chimú (1902)", "Descubrimiento de la Cultura Mochica (1909)"] },
-            { id: 30, type: 'order', points: 1, q: 'Ordena cronológicamente los descubrimientos realizados por Julio C. Tello:', correctOrder: ["Descubrimiento de la Cultura Chavín (1919)", "Descubrimiento de la Cultura Paracas (1925)"] },
-            { id: 31, type: 'order', points: 0.5, q: 'Ordena las siguientes palabras para formar el aporte agrícola exacto de la Cultura Tiahuanaco:', correctOrder: ["Adaptaron", "la", "agricultura", "a", "la", "altura"] }
+            // V. ORDENAR ADAPTADO A PREGUNTAS INDIVIDUALES (35-39) + PALABRAS (40)
+            { id: 35, type: 'mc', points: 0.5, q: 'Secuencia cronológica: ¿Qué descubrimiento realizó Max Uhle en primer lugar (año 1901)?', options: ["Cultura Nazca", "Cultura Chimú", "Cultura Mochica", "Cultura Chavín"], answer: 0 },
+            { id: 36, type: 'mc', points: 0.5, q: 'Secuencia cronológica: ¿Qué descubrimiento realizó Max Uhle en segundo lugar (año 1902)?', options: ["Cultura Nazca", "Cultura Mochica", "Cultura Chavín", "Cultura Chimú"], answer: 3 },
+            { id: 37, type: 'mc', points: 0.5, q: 'Secuencia cronológica: ¿Qué descubrimiento realizó Max Uhle en tercer lugar (año 1909)?', options: ["Cultura Mochica", "Cultura Chimú", "Cultura Nazca", "Cultura Paracas"], answer: 0 },
+            { id: 38, type: 'mc', points: 0.5, q: 'Secuencia cronológica: ¿Qué cultura descubrió Julio C. Tello en primer lugar (año 1919)?', options: ["Cultura Paracas", "Cultura Chavín", "Cultura Nazca", "Cultura Mochica"], answer: 1 },
+            { id: 39, type: 'mc', points: 0.5, q: 'Secuencia cronológica: ¿Qué cultura descubrió Julio C. Tello posteriormente (año 1925)?', options: ["Cultura Chavín", "Cultura Paracas", "Cultura Tiahuanaco", "Cultura Chimú"], answer: 1 },
+            { id: 40, type: 'order', points: 0.5, q: 'Ordena las siguientes palabras para formar el aporte agrícola exacto de la Cultura Tiahuanaco:', correctOrder: ["Adaptaron", "la", "agricultura", "a", "la", "altura"] }
         ];
 
         let questions = []; 
