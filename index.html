@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Segura - Ciencias Sociales</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        amberCustom: {
+                            50: '#fffbeed6', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706',
+                            700: '#b45309', 800: '#92400e', 900: '#78350f', 950: '#451a03',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            /* BLOQUEO DE SELECCIÓN DE TEXTO */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .matching-item { cursor: pointer; transition: all 0.2s ease; }
+        .matching-item.selected { border-color: #ea580c !important; background-color: #ffedd5 !important; box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.4); }
+        .matching-item.matched { opacity: 0.6; pointer-events: none; background-color: #f3f4f6 !important; border-color: #10b981 !important; }
+
+        .order-item { transition: transform 0.2s; }
+        .order-item:hover { transform: scale(1.01); }
+
+        #custom-notification { transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(-20px); opacity: 0; pointer-events: none; }
+        #custom-notification.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+
+        /* Estilo para la advertencia de Plagio a pantalla completa */
+        #plagio-warning-overlay {
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-950 via-orange-900 to-stone-900 min-h-screen text-gray-800 flex items-center justify-center p-3 md:p-6" oncontextmenu="return false;">
+
+    <!-- Notificación Flotante Estándar -->
+    <div id="custom-notification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-amber-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-bold flex items-center gap-3 border-2 border-amber-300">
+        <span id="notification-msg">Aviso</span>
+        <button onclick="hideNotification()" class="ml-4 text-white">✕</button>
+    </div>
+
+    <!-- OVERLAY ADVERTENCIA ROJA MODO ENFOQUE -->
+    <div id="plagio-warning-overlay" class="hidden fixed inset-0 z-[100] bg-red-900/90 flex flex-col items-center justify-center p-6 text-center">
+        <div class="bg-white rounded-3xl p-8 md:p-12 max-w-2xl shadow-2xl border-8 border-red-600 animate-bounce">
+            <h1 class="text-5xl md:text-6xl font-black text-red-600 mb-4">¡ALERTA DE SEGURIDAD!</h1>
+            <p class="text-xl md:text-2xl font-bold text-gray-800 mb-6">Has salido de la pantalla completa, cambiaste de pestaña o intentaste abrir otro programa.</p>
+            <p class="text-lg text-red-700 font-extrabold mb-8 bg-red-100 p-4 rounded-xl">Esta es tu PRIMERA Y ÚNICA advertencia. Si lo haces una vez más, el examen se cerrará y se enviará automáticamente con la nota que tengas.</p>
+            <button onclick="cerrarAdvertenciaPlagio()" class="bg-red-600 hover:bg-red-700 text-white font-black text-xl py-4 px-10 rounded-2xl shadow-lg transition">ENTENDIDO, VOLVER AL EXAMEN</button>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <div class="max-w-4xl w-full bg-orange-50/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-amber-700/30 overflow-hidden fade-in my-4 relative">
+        
+        <header class="bg-gradient-to-r from-amber-900 via-orange-800 to-amber-900 text-white p-6 text-center shadow-lg relative z-10">
+            <div class="inline-block bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider mb-2 shadow-sm">
+                I.E. Santísima Niña María - Ciencias Sociales
+            </div>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight drop-shadow">EVALUACIÓN: LAS CULTURAS DEL PERÚ</h1>
+            <p class="text-amber-200 font-medium text-base md:text-lg mt-1 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                </svg>
+                Modo Enfoque Activado
+            </p>
+        </header>
+
+        <!-- PANTALLA DE REGISTRO -->
+        <div id="screen-register" class="p-6 md:p-10 relative z-10">
+            <div class="max-w-lg mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-md border border-amber-200">
+                <h2 class="text-2xl font-black text-center mb-1 text-amber-900">¡Bienvenidas, queridas estudiantes!</h2>
+                <p class="text-center text-sm text-amber-700 mb-6">Selecciona tu grado y sección para comenzar tu evaluación.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-amber-900 mb-2">GRADO</label>
+                        <select id="sel-grado" onchange="resetListaAlumnas()" class="w-full p-3 border-2 border-amber-200 rounded-xl font-semibold outline-none bg-amber-50/50">
+                            <option value="">Elegir grado</option>
+                            <option value="1">1.º año</option>
+                            <option value="2">2.º año</option>
+                            <option value="3">3.º año</option>
+                            <option value="4">4.º año</option>
+                            <option value="5">5.º año</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-amber-900 mb-2">SECCIÓN</label>
+                        <select id="sel-seccion" onchange="resetListaAlumnas()" class="w-full p-3 border-2 border-amber-200 rounded-xl font-semibold outline-none bg-amber-50/50">
+                            <option value="">Elegir sección</option>
+                            <option value="A">Sección A</option>
+                            <option value="B">Sección B</option>
+                            <option value="C">Sección C</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="cargarEstudiantes()" class="w-full bg-amber-700 hover:bg-amber-800 text-white font-extrabold py-3 px-4 rounded-xl shadow-md mb-4 transition">
+                    🔍 Buscar Mi Nombre
+                </button>
+                <div id="container-nombre" class="hidden fade-in">
+                    <label class="block text-xs font-bold text-amber-900 mb-2">SELECCIONA TU NOMBRE DE LA LISTA</label>
+                    <select id="sel-nombre" class="w-full p-3 border-2 border-amber-300 rounded-xl font-semibold mb-6 bg-white"></select>
+                    
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl">
+                        <p class="text-xs font-bold text-red-800 mb-1 flex items-center gap-1">
+                            ⚠️ REGLAS DEL MODO SEGURO:
+                        </p>
+                        <ul class="text-xs text-red-700 list-disc list-inside">
+                            <li>El examen se abrirá en pantalla completa.</li>
+                            <li>Si sales de la pestaña o abres otro programa, recibirás una alerta.</li>
+                            <li>A la segunda alerta, el examen se cerrará automáticamente.</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="iniciarPantallaCompleta()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 px-4 rounded-xl shadow-lg text-lg transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                        ¡Entrar a Pantalla Completa y Comenzar!
+                    </button>
+                </div>
+                <div id="loading-msg" class="hidden text-center text-amber-800 font-bold mt-4 animate-pulse">⌛ Buscando lista de alumnas...</div>
+            </div>
+            <div class="mt-8 pt-4 border-t border-amber-200 text-center text-sm font-medium text-amber-900">
+                Elaborado por: <span class="font-bold">Idalia Tellería Vargas</span>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE EXAMEN -->
+        <div id="screen-game" class="hidden p-6 md:p-8 fade-in relative z-10">
+            <div class="flex justify-between items-center mb-6 bg-amber-100/80 p-4 rounded-2xl border border-amber-300">
+                <div>
+                    <span class="text-xs font-bold text-amber-700 uppercase block">Alumna</span>
+                    <span id="user-display-name" class="font-black text-amber-950 block text-lg">Estudiante</span>
+                </div>
+                <div class="w-1/2 bg-amber-200 rounded-full h-4 overflow-hidden hidden md:block">
+                    <div id="progress-bar" class="bg-orange-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+                <div class="font-extrabold text-amber-900 text-sm bg-white px-3 py-1.5 rounded-xl border border-amber-300">
+                    Pregunta <span id="current-q-num">1</span> / <span id="total-q-num">0</span>
+                </div>
+            </div>
+
+            <!-- Aquí van las preguntas dinámicas -->
+            <div id="question-card" class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-amber-200 mb-6"></div>
+
+            <div class="flex justify-between items-center gap-4">
+                <button id="btn-prev" onclick="navegarPregunta(-1)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-xl disabled:opacity-30 transition">← Anterior</button>
+                <button id="btn-next" onclick="navegarPregunta(1)" class="bg-amber-600 hover:bg-amber-700 text-white font-extrabold py-3 px-8 rounded-xl shadow-md transition">Siguiente →</button>
+                <button id="btn-finish" onclick="confirmarFinalizacion()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-8 rounded-xl shadow-lg transition">✅ Finalizar Evaluación</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE RESULTADOS -->
+        <div id="screen-results" class="hidden p-6 md:p-10 text-center fade-in relative z-10">
+            <div class="inline-block bg-amber-100 text-amber-900 text-xs font-bold px-4 py-1 rounded-full mb-2">
+                Evaluación completada
+            </div>
+            <h2 class="text-3xl font-black mb-2 text-amber-950">Reporte Final</h2>
+            <p id="result-student-info" class="text-sm font-bold text-amber-800 mb-6"></p>
+
+            <div id="resultado-plagio-msg" class="hidden mb-6 bg-red-100 text-red-800 font-bold p-4 rounded-xl border-2 border-red-300">
+                ⚠️ El examen fue enviado automáticamente por evadir la seguridad del navegador (salir de pantalla completa o cambiar de pestaña repetidamente).
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white border-2 border-amber-300 rounded-3xl p-6 shadow-md flex flex-col items-center justify-center">
+                    <p class="text-xs font-bold uppercase mb-1 text-gray-500">Logro Alcanzado</p>
+                    <div id="result-letter" class="text-7xl font-black text-amber-600 my-1">--</div>
+                    <p id="result-level-desc" class="text-sm font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-900 mt-1">--</p>
+                    <p id="result-points" class="text-2xl font-extrabold text-amber-900 mt-3">Nota: 0 / 20</p>
+                </div>
+                <div class="bg-white border-2 border-amber-300 rounded-3xl p-6 shadow-md text-left flex flex-col justify-center">
+                    <div class="text-emerald-700 font-bold mb-3 text-lg">✔ Correctas: <span id="stat-correct">0</span></div>
+                    <div class="text-rose-700 font-bold mb-3 text-lg">❌ Incorrectas: <span id="stat-incorrect">0</span></div>
+                    <div class="text-slate-700 font-bold text-lg">⚪ En Blanco: <span id="stat-blank">0</span></div>
+                </div>
+            </div>
+
+            <!-- Tabla resumen de escala de calificación -->
+            <div class="bg-white/90 border border-amber-200 rounded-2xl p-4 mb-6 text-xs text-left">
+                <p class="font-extrabold text-amber-950 uppercase mb-2 text-center">Escala de Calificación Institucional</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-semibold">
+                    <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                        <span class="font-black text-base block">AD (18 – 20)</span>
+                        Logro destacado
+                    </div>
+                    <div class="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-900">
+                        <span class="font-black text-base block">A (15 – 17)</span>
+                        Logro esperado / Satisfactorio
+                    </div>
+                    <div class="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+                        <span class="font-black text-base block">B (11 – 14)</span>
+                        En proceso
+                    </div>
+                    <div class="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-900">
+                        <span class="font-black text-base block">C (00 – 10)</span>
+                        En inicio / Reprobado
+                    </div>
+                </div>
+            </div>
+
+            <div id="sync-status" class="mb-6 p-4 rounded-xl text-sm font-bold bg-amber-100 border border-amber-300">⌛ Registrando tus resultados...</div>
+        </div>
+
+    </div>
+
+    <script>
+        // ENLACE APPS SCRIPT ACTUALIZADO
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbx7eo0s8HwBVB1eGosz9sQJB2k7k8MOef6F6GKXruSDDx4_6GDSilpru8kFDJRUZGJ6/exec";
+
+        let userIP = "No detectada";
+        fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => { userIP = data.ip; }).catch(()=>{});
+
+        // REGLAS DE SEGURIDAD (ANTI-PLAGIO)
+        let isExamStarted = false;
+        let isExamFinished = false;
+        let plagioCount = 0;
+
+        // Prevenir copiar, pegar, cortar
+        document.addEventListener('copy', (e) => { e.preventDefault(); return false; });
+        document.addEventListener('cut', (e) => { e.preventDefault(); return false; });
+        document.addEventListener('paste', (e) => { e.preventDefault(); return false; });
+        
+        // Prevenir atajos de teclado comunes para inspeccionar o copiar
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'p', 's', 'u'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key))) {
+                e.preventDefault();
+            }
+        });
+
+        // Detectar si cambian de pestaña o salen de pantalla completa
+        function checkPlagio(reason) {
+            if (!isExamStarted || isExamFinished) return;
+            
+            plagioCount++;
+            if (plagioCount === 1) {
+                document.getElementById('plagio-warning-overlay').classList.remove('hidden');
+            } else if (plagioCount >= 2) {
+                document.getElementById('resultado-plagio-msg').classList.remove('hidden');
+                confirmarFinalizacion(); // Forzar envío
+            }
+        }
+
+        // Evento: cambia de pestaña
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) checkPlagio('tab_switch');
+        });
+
+        // Evento: sale de pantalla completa
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) checkPlagio('exit_fullscreen');
+        });
+
+        function cerrarAdvertenciaPlagio() {
+            document.getElementById('plagio-warning-overlay').classList.add('hidden');
+            // Intentar volver a pantalla completa
+            if(document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(()=>{});
+            }
+        }
+
+        // ALGORITMO FISHER-YATES PARA ALEATORIEDAD REAL
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function showNotification(msg) {
+            document.getElementById('notification-msg').textContent = msg;
+            document.getElementById('custom-notification').classList.add('show');
+            setTimeout(() => document.getElementById('custom-notification').classList.remove('show'), 3200);
+        }
+        function hideNotification() { document.getElementById('custom-notification').classList.remove('show'); }
+
+        function resetListaAlumnas() {
+            document.getElementById('container-nombre').classList.add('hidden');
+            document.getElementById('sel-nombre').innerHTML = '';
+        }
+
+        // BANCO DE PREGUNTAS ACTUALIZADO (TOTAL DE PUNTOS: 40, PARA ESCALA DE 20)
+        const originalQuestions = [
+            // I. PREGUNTAS PARA MARCAR (OPCIÓN MÚLTIPLE) - 10 puntos
+            { id: 1, type: 'mc', points: 1, q: '¿Qué significa el prefijo en la palabra "Preinca"?', options: ["Después de los incas", "Antes de los incas", "Durante los incas", "Enemigos de los incas"], answer: 1 },
+            { id: 2, type: 'mc', points: 1, q: '¿Quién fue el arqueólogo peruano que descubrió la cultura Chavín en 1919?', options: ["Max Uhle", "María Reiche", "Julio C. Tello", "Pedro Cieza de León"], answer: 2 },
+            { id: 3, type: 'mc', points: 1, q: 'La cultura Paracas destacó en la medicina antigua porque realizaron cirugías complejas para curar a los guerreros heridos. ¿Cómo se llamaron estas operaciones?', options: ["Fardos funerarios", "Trepanaciones craneanas", "Huacos retratos", "Camellones"], answer: 1 },
+            { id: 4, type: 'mc', points: 1, q: '¿Qué cultura costera construyó enormes monumentos y destacó por sus "huacos retratos" que expresaban diversos estados de ánimo?', options: ["Cultura Mochica", "Cultura Nazca", "Cultura Tiahuanaco", "Cultura Chavín"], answer: 0 },
+            { id: 5, type: 'mc', points: 1, q: 'María Reiche fue la principal estudiosa de las Líneas de Nazca. ¿Con qué otro nombre se le conoce a esta investigadora?', options: ["La señora de Cao", "La dama de las pampas", "La reina de Chan Chan", "La sacerdotisa de Sipán"], answer: 1 },
+            { id: 6, type: 'mc', points: 1, q: '¿Qué dios principal fue tallado en la "Portada del Sol" construida por la cultura Tiahuanaco?', options: ["Dios Naylamp", "Dios Inti", "Dios de los Báculos (Wiracocha)", "Señor de Sipán"], answer: 2 },
+            { id: 7, type: 'mc', points: 1, q: 'Fueron considerados los mejores arquitectos de la costa peruana y su capital fue la ciudadela de barro llamada Chan Chan:', options: ["Chavín", "Mochica", "Paracas", "Chimú"], answer: 3 },
+            { id: 8, type: 'mc', points: 1, q: '¿Qué objetos utilizaban los pobladores de la cultura Chimú para poder navegar por el mar?', options: ["Lanchas de madera", "Caballitos de totora", "Canoas de piedra", "Balsas de cuero"], answer: 1 },
+            { id: 9, type: 'mc', points: 1, q: 'La cultura Nazca logró sobrevivir en el desierto gracias a grandes obras de ingeniería. ¿Qué construyeron para llevar agua a sus cultivos?', options: ["Camellones y cochas", "Represas y canales subterráneos", "Huacas de adobe", "Fardos funerarios"], answer: 1 },
+            { id: 10, type: 'mc', points: 1, q: 'La Estela de Raimondi, el Obelisco Tello y el Lanzón Monolítico son esculturas líticas (de piedra) que pertenecen a la cultura:', options: ["Chavín", "Chimú", "Paracas", "Mochica"], answer: 0 },
+
+            // II. PREGUNTAS PARA COMPLETAR (ESPACIOS EN BLANCO) - 10 puntos
+            { id: 11, type: 'fill', points: 1, q: 'La cultura ________ se desarrolló en el departamento de Ancash (Provincia de Huari).', accepted: ["Chavín", "chavin", "CHAVÍN", "CHAVIN"] },
+            { id: 12, type: 'fill', points: 1, q: 'Los tejidos de la cultura Paracas se realizaban utilizando lana de ________, algodón y plumas.', accepted: ["vicuña", "vicuna", "VICUÑA", "VICUNA"] },
+            { id: 13, type: 'fill', points: 1, q: 'El calendario astronómico más grande del mundo se ubica en Ica y es mundialmente conocido como los ________ o Líneas de Nazca.', accepted: ["Geoglifos", "geoglifos", "GEOGLIFOS"] },
+            { id: 14, type: 'fill', points: 1, q: 'En la cultura Mochica, se han encontrado tumbas reales intactas de gran poder político, siendo la más famosa la del Señor de ________.', accepted: ["Sipán", "sipan", "SIPÁN", "SIPAN"] },
+            { id: 15, type: 'fill', points: 1, q: 'Para vencer el clima frío de la altura, los Tiahuanaco adaptaron la agricultura utilizando chacras elevadas llamadas ________.', accepted: ["camellones", "Camellones", "CAMELLONES"] },
+            { id: 16, type: 'fill', points: 1, q: 'La cerámica representativa de la cultura Tiahuanaco era un vaso ceremonial conocido con el nombre de ________.', accepted: ["kero", "Kero", "KERO", "quero", "Quero", "QUERO"] },
+            { id: 17, type: 'fill', points: 1, q: 'El cuchillo ceremonial de oro adornado con piedras preciosas, símbolo de la orfebrería de la cultura Chimú, se llama ________.', accepted: ["Tumi", "tumi", "TUMI"] },
+            { id: 18, type: 'fill', points: 1, q: 'Los difuntos en la cultura Paracas eran envueltos en hermosos mantos, formando verdaderos cofres de admirables tejidos conocidos como ________ funerarios.', accepted: ["fardos", "Fardos", "FARDOS"] },
+            { id: 19, type: 'fill', points: 1, q: 'Según la historia, los antiguos peruanos lograron sustentar su alimentación gracias al constante desarrollo de la agricultura y la ________.', accepted: ["ganadería", "ganaderia", "Ganadería", "GANADERÍA", "GANADERIA", "la ganaderia", "la ganadería"] },
+            { id: 20, type: 'fill', points: 1, q: 'Max Uhle es el descubridor de varias culturas costeñas, entre ellas la cultura ________ en 1901 y la cultura Chimú en 1902.', accepted: ["Nazca", "nazca", "NAZCA", "Nasca", "nasca", "NASCA"] },
+
+            // III. COMPLETAR (CON IMÁGENES) - 6 puntos
+            { id: 21, type: 'image_mc', points: 1, q: 'Observa la siguiente escultura en piedra que se colocaba en los templos para causar temor. ¿A qué cultura pertenece esta "Cabeza Clava"?', imageUrl: "https://www.gettyimages.com/detail/photo/cabeza-clava-or-pre-incan-sculpture-in-peru-royalty-free-image/1214097431", options: ["Cultura Chavín", "Cultura Paracas", "Cultura Nazca", "Cultura Mochica"], answer: 0 },
+            { id: 22, type: 'image_mc', points: 1, q: 'Este antiguo y colorido textil es evidencia de que fueron los mejores tejedores. ¿A qué cultura pertenece este manto?', imageUrl: "https://www.gettyimages.com/detail/news-photo/pre-inca-civilization-peru-circa-6th-century-b-c-paracas-news-photo/122219696", options: ["Cultura Chavín", "Cultura Nazca", "Cultura Paracas", "Cultura Chimú"], answer: 2 },
+            { id: 23, type: 'image_mc', points: 1, q: 'La imagen vista desde el aire muestra la figura de un colibrí gigante trazado en el desierto. ¿Qué cultura elaboró este geoglifo?', imageUrl: "https://www.gettyimages.com/detail/photo/colibri-nazca-lines-peru-royalty-free-image/460245349", options: ["Cultura Tiahuanaco", "Cultura Mochica", "Cultura Paracas", "Cultura Nazca (o Nasca)"], answer: 3 },
+            { id: 24, type: 'image_mc', points: 1, q: 'Esta cerámica escultórica expresa estados de ánimo en el rostro humano (Huaco Retrato). ¿A qué cultura de la costa norte pertenece?', imageUrl: "https://www.gettyimages.com/detail/photo/mochica-ceramic-stirrup-spout-vessel-with-shaman-royalty-free-image/541363616", options: ["Cultura Chimú", "Cultura Mochica (o Moche)", "Cultura Chavín", "Cultura Tiahuanaco"], answer: 1 },
+            { id: 25, type: 'image_mc', points: 1, q: 'El monumento lítico que observas es la "Portada del Sol", donde tallaron al Dios de los Báculos. ¿Qué cultura construyó este monumento?', imageUrl: "https://media.gettyimages.com/id/527970534/es/foto/monolith-in-gateway-of-pre-incan-ruins-tiahuanaco.jpg?s=170667a&w=gi&k=20&c=L5v8mNvJBcpmQNI1ZsAlb3K99Qo2hON3vvzM9vXXKsk=", options: ["Cultura Paracas", "Cultura Nazca", "Cultura Tiahuanaco", "Cultura Chavín"], answer: 2 },
+            { id: 26, type: 'image_mc', points: 1, q: 'Esta pieza ceremonial de oro fino representa al dios Naylamp y demuestra un gran trabajo de orfebrería. ¿A qué cultura pertenece el Tumi?', imageUrl: "https://www.gettyimages.com/detail/news-photo/chimu-culture-tumi-sacrificial-ceremonial-axe-made-of-gold-news-photo/513679001", options: ["Cultura Chimú", "Cultura Mochica", "Cultura Tiahuanaco", "Cultura Nazca"], answer: 0 },
+
+            // IV. RELACIONAR (PAREAMIENTO) - 8 puntos (4 puntos cada bloque)
+            { id: 27, type: 'match', points: 4, q: 'Relaciona la Cultura Preinca con el Departamento actual donde se desarrolló:', pairs: [ { left: "Cultura Paracas", right: "Ica (Península)" }, { left: "Cultura Tiahuanaco", right: "Puno (Meseta del Collao)" }, { left: "Cultura Chavín", right: "Ancash" }, { left: "Cultura Chimú", right: "La Libertad" } ] },
+            { id: 28, type: 'match', points: 4, q: 'Relaciona la Cultura con su Investigador o Descubridor:', pairs: [ { left: "Cultura Nazca", right: "Max Uhle (1901) / María Reiche" }, { left: "Cultura Chavín", right: "Julio C. Tello (1919)" }, { left: "Cultura Tiahuanaco", right: "Pedro Cieza de León (Cronista)" }, { left: "Cultura Mochica", right: "Max Uhle (1909)" } ] },
+
+            // V. ORDENAR (SECUENCIAS Y JERARQUÍAS) - 6 puntos
+            { id: 29, type: 'order', points: 3, q: 'Ordena cronológicamente (del más antiguo al más reciente) los descubrimientos realizados por el arqueólogo Max Uhle:', correctOrder: ["Descubrimiento de la Cultura Nazca (1901)", "Descubrimiento de la Cultura Chimú (1902)", "Descubrimiento de la Cultura Mochica (1909)"] },
+            { id: 30, type: 'order', points: 2, q: 'Ordena cronológicamente los descubrimientos realizados por Julio C. Tello:', correctOrder: ["Descubrimiento de la Cultura Chavín (1919)", "Descubrimiento de la Cultura Paracas (1925)"] },
+            { id: 31, type: 'order', points: 1, q: 'Ordena las siguientes palabras para formar el aporte agrícola exacto de la Cultura Tiahuanaco:', correctOrder: ["Adaptaron", "la", "agricultura", "a", "la", "altura"] }
+        ];
+
+        let questions = []; 
+        let currentQuestionIndex = 0;
+        let studentData = {};
+        let userAnswers = {};
+        let matchSelections = {};
+        let maxScore = 0;
+
+        function cargarEstudiantes() {
+            const grado = document.getElementById('sel-grado').value;
+            const seccion = document.getElementById('sel-seccion').value;
+            
+            if (!grado) return showNotification("Por favor, selecciona tu grado.");
+            if (!seccion || !["A", "B", "C"].includes(seccion)) return showNotification("Por favor, selecciona una sección (A, B o C).");
+            
+            document.getElementById('loading-msg').classList.remove('hidden');
+            fetch(`${GOOGLE_SHEETS_URL}?action=getEstudiantes&grado=${grado}&seccion=${seccion}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loading-msg').classList.add('hidden');
+                    if (data.status === "success" && data.estudiantes.length > 0) {
+                        const sel = document.getElementById('sel-nombre');
+                        sel.innerHTML = '<option value="">Selecciona tu nombre</option>';
+                        data.estudiantes.forEach(e => sel.innerHTML += `<option value="${e}">${e}</option>`);
+                        document.getElementById('container-nombre').classList.remove('hidden');
+                    } else {
+                        showNotification("No se encontraron alumnas registradas en ese grado y sección.");
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('loading-msg').classList.add('hidden');
+                    showNotification("Error de conexión con la base de datos.");
+                });
+        }
+
+        // Pantalla completa obligatoria
+        function iniciarPantallaCompleta() {
+            const n = document.getElementById('sel-nombre').value;
+            if (!n) return showNotification("Por favor, selecciona tu nombre antes de continuar.");
+            
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().then(() => iniciarEvaluacion()).catch(err => {
+                    showNotification("Debes permitir la pantalla completa para dar el examen.");
+                });
+            } else {
+                iniciarEvaluacion(); // Fallback para navegadores antiguos
+            }
+        }
+
+        function iniciarEvaluacion() {
+            const n = document.getElementById('sel-nombre').value;
+            isExamStarted = true; // Activar el modo escucha de trampas
+
+            // 1. CLONAR Y MEZCLAR PREGUNTAS (FISHER-YATES)
+            questions = shuffleArray(JSON.parse(JSON.stringify(originalQuestions)));
+            
+            // 2. MEZCLAR ALTERNATIVAS
+            questions.forEach(q => {
+                if (q.type === 'mc' || q.type === 'image_mc') {
+                    const correctText = q.options[q.answer];
+                    q.options = shuffleArray(q.options);
+                    q.answer = q.options.indexOf(correctText);
+                } else if (q.type === 'order') {
+                    let shuffled = shuffleArray(q.correctOrder);
+                    if (shuffled.length > 1 && shuffled.every((v, i) => v === q.correctOrder[i])) {
+                        [shuffled[0], shuffled[1]] = [shuffled[1], shuffled[0]];
+                    }
+                    userAnswers[q.id] = shuffled;
+                } else if (q.type === 'match') {
+                    matchSelections[q.id] = {
+                        lefts: shuffleArray(q.pairs.map(p => p.left)),
+                        rights: shuffleArray(q.pairs.map(p => p.right)),
+                        pairs: {}, selL: null
+                    };
+                }
+            });
+
+            maxScore = questions.reduce((acc, q) => acc + q.points, 0);
+            document.getElementById('total-q-num').textContent = questions.length;
+
+            studentData = { 
+                grado: document.getElementById('sel-grado').value, 
+                seccion: document.getElementById('sel-seccion').value, 
+                nombre: n 
+            };
+            
+            document.getElementById('user-display-name').textContent = `${n} (${studentData.grado}.º "${studentData.seccion}")`;
+            document.getElementById('screen-register').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1)/questions.length)*100}%`;
+
+            document.getElementById('btn-prev').disabled = (currentQuestionIndex === 0);
+            if (currentQuestionIndex === questions.length - 1) {
+                document.getElementById('btn-next').classList.add('hidden');
+                document.getElementById('btn-finish').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-next').classList.remove('hidden');
+                document.getElementById('btn-finish').classList.add('hidden');
+            }
+
+            let html = `
+                <div class="mb-4 flex justify-between items-center">
+                    <span class="bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">Valor: ${q.points} Pts</span>
+                    <span class="text-xs text-gray-400 font-semibold">Orden aleatorio activo</span>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-lg md:text-xl font-black text-amber-950">${q.q}</h3>
+                </div>
+            `;
+
+            if (q.type === 'mc' || q.type === 'image_mc') {
+                if (q.type === 'image_mc' && q.imageUrl) {
+                    html += `<img src="${q.imageUrl}" class="w-full max-h-64 object-contain rounded-xl mb-4 border-2 border-amber-200" oncontextmenu="return false;" alt="Imagen de evaluación">`;
+                }
+                html += `<div class="space-y-3">`;
+                q.options.forEach((opt, idx) => {
+                    const isSel = (userAnswers[q.id] === idx);
+                    html += `<button onclick="selectMC(${q.id}, ${idx})" class="w-full text-left p-4 rounded-xl border-2 font-semibold transition flex items-center justify-between ${isSel ? 'border-orange-600 bg-orange-100 text-orange-950' : 'border-amber-200 bg-amber-50 hover:bg-amber-100'}">
+                        <span>${String.fromCharCode(65 + idx)}. ${opt}</span>
+                        <div class="w-5 h-5 rounded-full border-2 ${isSel ? 'border-orange-600 bg-orange-600' : 'border-amber-400'}"></div>
+                    </button>`;
+                });
+                html += `</div>`;
+            }
+            else if (q.type === 'order') {
+                const currentArr = userAnswers[q.id];
+                html += `<p class="text-xs font-bold text-amber-800 uppercase mb-4">Usa los botones ⬆️ y ⬇️ para ordenar correctamente:</p><div class="space-y-2">`;
+                currentArr.forEach((item, idx) => {
+                    html += `
+                    <div class="order-item bg-amber-50 border-2 border-amber-300 rounded-xl p-3 flex justify-between items-center font-semibold">
+                        <span class="flex-1 mr-4">${idx + 1}. ${item}</span>
+                        <div class="flex flex-col gap-1">
+                            <button onclick="moveOrder(${q.id}, ${idx}, -1)" class="bg-amber-200 hover:bg-amber-300 px-3 py-1 rounded text-lg" ${idx === 0 ? 'disabled opacity-30' : ''}>⬆️</button>
+                            <button onclick="moveOrder(${q.id}, ${idx}, 1)" class="bg-amber-200 hover:bg-amber-300 px-3 py-1 rounded text-lg" ${idx === currentArr.length - 1 ? 'disabled opacity-30' : ''}>⬇️</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            else if (q.type === 'fill') {
+                html += `<input type="text" value="${userAnswers[q.id] || ''}" oninput="userAnswers[${q.id}] = this.value" onpaste="return false;" class="w-full p-4 border-2 border-amber-300 rounded-xl text-lg font-bold bg-amber-50 focus:border-orange-500 focus:outline-none" placeholder="Escribe aquí tu respuesta..."/>`;
+            }
+            else if (q.type === 'match') {
+                const st = matchSelections[q.id];
+                html += `<div class="flex justify-between items-center mb-3">
+                            <p class="text-xs font-bold text-amber-800 uppercase">Empareja los elementos:</p>
+                            <button onclick="resetMatch(${q.id})" class="text-xs bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold px-3 py-1 rounded-lg">Reiniciar pares</button>
+                         </div>
+                         <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">${st.lefts.map(i => `<div onclick="selMatchL(${q.id}, '${i.replace(/'/g, "\\'")}')" class="p-3 border-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${st.pairs[i]?'opacity-50 bg-gray-100 border-green-500':(st.selL===i?'border-orange-500 bg-orange-100':'border-amber-300 bg-amber-50 hover:bg-amber-100')}">${i} ${st.pairs[i]?'✓':''}</div>`).join('')}</div>
+                            <div class="space-y-2">${st.rights.map(i => `<div onclick="selMatchR(${q.id}, '${i.replace(/'/g, "\\'")}')" class="p-3 border-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${Object.values(st.pairs).includes(i)?'opacity-50 bg-gray-100 border-green-500':'border-amber-300 bg-amber-50 hover:bg-amber-100'}">${i}</div>`).join('')}</div>
+                         </div>`;
+            }
+
+            document.getElementById('question-card').innerHTML = html;
+        }
+
+        function selectMC(qId, idx) { userAnswers[qId] = idx; renderQuestion(); }
+        function moveOrder(qId, idx, dir) {
+            let arr = userAnswers[qId];
+            if (dir === -1 && idx > 0) { [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]]; }
+            if (dir === 1 && idx < arr.length-1) { [arr[idx+1], arr[idx]] = [arr[idx], arr[idx+1]]; }
+            renderQuestion();
+        }
+        function selMatchL(qId, i) { if(!matchSelections[qId].pairs[i]) { matchSelections[qId].selL = i; renderQuestion(); } }
+        function selMatchR(qId, i) {
+            const st = matchSelections[qId];
+            if(st.selL && !Object.values(st.pairs).includes(i)) { 
+                st.pairs[st.selL] = i; st.selL = null; 
+                userAnswers[qId] = {...st.pairs}; renderQuestion(); 
+            }
+        }
+        function resetMatch(qId) {
+            matchSelections[qId].pairs = {}; matchSelections[qId].selL = null; delete userAnswers[qId]; renderQuestion();
+        }
+        function navegarPregunta(dir) { currentQuestionIndex += dir; renderQuestion(); }
+
+        function confirmarFinalizacion() {
+            if (isExamFinished) return; // Evitar doble envío
+            isExamFinished = true;
+            
+            // Salir de pantalla completa si sigue activa
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(()=>{});
+            }
+
+            let pts = 0, corr = 0, inco = 0, blan = 0;
+            questions.forEach(q => {
+                let ans = userAnswers[q.id];
+                if (ans === undefined || ans === '' || (q.type === 'match' && Object.keys(ans).length === 0)) { 
+                    blan++; 
+                } else if (q.type === 'mc' || q.type === 'image_mc') { 
+                    ans === q.answer ? (corr++, pts += q.points) : inco++; 
+                } else if (q.type === 'fill') { 
+                    q.accepted.some(a => a.toLowerCase() === ans.trim().toLowerCase()) ? (corr++, pts += q.points) : inco++; 
+                } else if (q.type === 'order') { 
+                    let isOK = q.correctOrder.every((v, i) => v === ans[i]); 
+                    isOK ? (corr++, pts += q.points) : inco++; 
+                } else if (q.type === 'match') {
+                    let c = 0; 
+                    q.pairs.forEach(p => { if (ans && ans[p.left] === p.right) c++; });
+                    if (c === q.pairs.length) {
+                        corr++; pts += q.points;
+                    } else if (c > 0) {
+                        inco++; pts += (c / q.pairs.length) * q.points;
+                    } else { inco++; }
+                }
+            });
+
+            // ESCALA VIGESIMAL Y LITERAL
+            const notaVigesimal = Math.round((pts / maxScore) * 20) || 0;
+            const notaFormateada = notaVigesimal < 10 ? `0${notaVigesimal}` : `${notaVigesimal}`;
+            
+            let letR = 'C', descR = 'En inicio / Reprobado';
+            let colorClass = "text-7xl font-black text-red-600 my-1", badgeClass = "text-sm font-extrabold px-4 py-1 rounded-full bg-red-100 text-red-800 mt-1";
+
+            if (notaVigesimal >= 18) {
+                letR = 'AD'; descR = 'Logro destacado'; colorClass = "text-7xl font-black text-emerald-600 my-1"; badgeClass = "text-sm font-extrabold px-4 py-1 rounded-full bg-emerald-100 text-emerald-800 mt-1";
+            } else if (notaVigesimal >= 15) {
+                letR = 'A'; descR = 'Logro esperado / Satisfactorio'; colorClass = "text-7xl font-black text-blue-600 my-1"; badgeClass = "text-sm font-extrabold px-4 py-1 rounded-full bg-blue-100 text-blue-800 mt-1";
+            } else if (notaVigesimal >= 11) {
+                letR = 'B'; descR = 'En proceso'; colorClass = "text-7xl font-black text-amber-500 my-1"; badgeClass = "text-sm font-extrabold px-4 py-1 rounded-full bg-amber-100 text-amber-900 mt-1";
+            }
+
+            document.getElementById('result-student-info').textContent = `Alumna: ${studentData.nombre} — ${studentData.grado}.º año, Sección "${studentData.seccion}"`;
+            const letterEl = document.getElementById('result-letter');
+            letterEl.textContent = letR; letterEl.className = colorClass;
+            const descEl = document.getElementById('result-level-desc');
+            descEl.textContent = descR; descEl.className = badgeClass;
+            
+            document.getElementById('result-points').textContent = `Nota: ${notaFormateada} / 20`;
+            document.getElementById('stat-correct').textContent = corr;
+            document.getElementById('stat-incorrect').textContent = inco;
+            document.getElementById('stat-blank').textContent = blan;
+            
+            document.getElementById('plagio-warning-overlay').classList.add('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-results').classList.remove('hidden');
+
+            // ENVÍO DE DATOS A GOOGLE SHEETS
+            fetch(GOOGLE_SHEETS_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ 
+                    ...studentData, 
+                    correctas: corr, 
+                    incorrectas: inco, 
+                    enBlanco: blan, 
+                    puntaje: notaVigesimal, 
+                    letra: letR, 
+                    descripcion: descR,
+                    alertasPlagio: plagioCount,
+                    ip: userIP 
+                })
+            }).then(() => { 
+                document.getElementById('sync-status').innerHTML = "✅ ¡Listo! Tu calificación ha sido registrada correctamente."; 
+            }).catch(() => {
+                document.getElementById('sync-status').innerHTML = "⚠️ Evaluación finalizada (verifica tu conexión con el servidor).";
+            });
+        }
+    </script>
+</body>
+</html>
